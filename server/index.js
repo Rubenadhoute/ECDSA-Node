@@ -2,14 +2,17 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const port = 3042;
+const secp = require("ethereum-cryptography/secp256k1");
+const {toHex, utf8ToBytes} = require("ethereum-cryptography/utils");
+const {keccak256} = require("ethereum-cryptography/keccak");
 
 app.use(cors());
 app.use(express.json());
 
 const balances = {
-  "0x1": 100,
-  "0x2": 50,
-  "0x3": 75,
+    "0xe3dcf2110ca71260ddd455c9d29a84ded9d99f8fda9c35820fb91ba1a608fcdf": 101,
+    "0x8e093e4fe9b96645f20707fe2e610b92043919db7dcda9c6fa56bb458119490b": 50,
+    "0x856e559a4a06019d94292c1dcdaaaed3a3eb31e27cb694fe8a768d7546fce7a9": 75,
 };
 
 app.get("/balance/:address", (req, res) => {
@@ -19,18 +22,34 @@ app.get("/balance/:address", (req, res) => {
 });
 
 app.post("/send", (req, res) => {
-  const { sender, recipient, amount } = req.body;
+    const {sender, recipient, amount, signature, recoveryBit, publicKey} = req.body;
+    console.log("Sender : ", sender);
+    console.log("Recipient : ", recipient);
+    console.log("Amount : ", amount);
+    console.log("Signature : ", signature);
+    console.log("Recovery Bit : ", recoveryBit);
 
-  setInitialBalance(sender);
-  setInitialBalance(recipient);
-
-  if (balances[sender] < amount) {
-    res.status(400).send({ message: "Not enough funds!" });
-  } else {
-    balances[sender] -= amount;
-    balances[recipient] += amount;
-    res.send({ balance: balances[sender] });
-  }
+    let message = {
+        from: sender,
+        to: recipient,
+        amount: amount,
+    };
+    const messageHash = keccak256(utf8ToBytes(JSON.stringify(message)));
+    const recoverKey = secp.recoverPublicKey(messageHash, signature, recoveryBit);
+    setInitialBalance(sender);
+    setInitialBalance(recipient);
+    //checking that the key recovered from signature match the given public key
+    if (toHex(recoverKey) === publicKey) {
+        if (balances[sender] < amount) {
+            res.status(400).send({message: "Not enough funds in " + sender + " wallet !"});
+        } else {
+            balances[sender] -= amount;
+            balances[recipient] += amount;
+            res.send({balance: balances[sender]});
+        }
+    } else {
+        res.status(400).send({message: "Not the right signature !"});
+    }
 });
 
 app.listen(port, () => {
