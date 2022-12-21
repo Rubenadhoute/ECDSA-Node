@@ -10,7 +10,7 @@ Public Key Cryptography
 
 FE/BE connection - working with both server and client
 
-Incoporate Public Key Cryptography using Ethereum Cryptography library 
+Ethereum Cryptography library 
 
 
 ### Step to reproduce
