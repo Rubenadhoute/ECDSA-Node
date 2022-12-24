@@ -6,11 +6,9 @@ I am interested in implementing Public Key Cryptography. By using Elliptic Curve
  
 ### Key Learnings
 
-Public Key Cryptography
+- Public Key Cryptography
 
-FE/BE connection - working with both server and client
-
-Ethereum Cryptography library 
+- Ethereum Cryptography library 
 
 
 ### Step to reproduce
